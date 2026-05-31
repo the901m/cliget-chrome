@@ -1,13 +1,44 @@
 const requestHeadersMap = new Map();
 const contentDispositionMap = new Map();
+const requestBodyMap = new Map();
 
-// 1. Capture outbound request headers
+// 1. Capture POST body data (for form-submitted/login downloads)
+chrome.webRequest.onBeforeRequest.addListener(
+  (details) => {
+    if (details.method === "POST" && details.requestBody) {
+      let bodyData = null;
+      if (details.requestBody.formData) {
+        const params = new URLSearchParams();
+        for (const [key, values] of Object.entries(details.requestBody.formData)) {
+          values.forEach(val => params.append(key, val));
+        }
+        bodyData = params.toString();
+      } else if (details.requestBody.raw && details.requestBody.raw[0]) {
+        try {
+          const decoder = new TextDecoder("utf-8");
+          bodyData = decoder.decode(details.requestBody.raw[0].bytes);
+        } catch (e) {
+          console.error("Failed to decode raw POST body", e);
+        }
+      }
+      if (bodyData) {
+        requestBodyMap.set(details.url, bodyData);
+        if (requestBodyMap.size > 50) {
+          requestBodyMap.delete(requestBodyMap.keys().next().value);
+        }
+      }
+    }
+  },
+  { urls: ["<all_urls>"] },
+  ["requestBody"]
+);
+
+// 2. Capture outbound request headers
 chrome.webRequest.onBeforeSendHeaders.addListener(
   (details) => {
     if (details.url.startsWith('http://') || details.url.startsWith('https://')) {
       const headers = details.requestHeaders.filter(h => {
         const name = h.name.toLowerCase();
-        // Filter transport/length headers that CLI tools handle natively
         return ![
           'content-length', 
           'connection', 
@@ -43,7 +74,7 @@ function getFilenameFromContentDisposition(headerValue) {
   return null;
 }
 
-// 2. Capture response headers to find the real filename early
+// 3. Capture response headers to find the real filename early
 chrome.webRequest.onHeadersReceived.addListener(
   (details) => {
     if (details.responseHeaders) {
@@ -117,11 +148,12 @@ chrome.downloads.onCreated.addListener(async (downloadItem) => {
     return;
   }
 
-  chrome.storage.local.get({ autoPause: false }, (settings) => {
-    if (settings.autoPause) {
-      chrome.downloads.pause(downloadItem.id, () => {
+  // Auto-cancel instead of auto-pause to immediately stop browser downloads
+  chrome.storage.local.get({ autoCancel: false }, (settings) => {
+    if (settings.autoCancel) {
+      chrome.downloads.cancel(downloadItem.id, () => {
         if (chrome.runtime.lastError) {
-          console.log("Could not pause download:", chrome.runtime.lastError.message);
+          console.log("Could not cancel download:", chrome.runtime.lastError.message);
         }
       });
     }
@@ -130,9 +162,10 @@ chrome.downloads.onCreated.addListener(async (downloadItem) => {
   const url = downloadItem.url;
   const finalUrl = downloadItem.finalUrl || url;
 
-  // Fetch captured webRequest headers
+  // Retrieve headers and post body mapping
   let rawHeaders = requestHeadersMap.get(url) || requestHeadersMap.get(finalUrl) || [];
   let headers = mergeWithDefaultHeaders(rawHeaders, downloadItem);
+  let bodyData = requestBodyMap.get(url) || requestBodyMap.get(finalUrl) || null;
 
   // Fetch fresh cookies and update the cookie header
   try {
@@ -161,6 +194,7 @@ chrome.downloads.onCreated.addListener(async (downloadItem) => {
     finalUrl: finalUrl,
     filename: filename,
     headers: headers,
+    bodyData: bodyData,
     timestamp: Date.now()
   };
 

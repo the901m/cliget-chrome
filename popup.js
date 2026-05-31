@@ -9,6 +9,7 @@ function generateCommands(download, extraArgs) {
   const url = download.finalUrl || download.url;
   const filename = download.filename || 'download';
   const headers = download.headers || [];
+  const bodyData = download.bodyData;
 
   const eUrl = escapeBash(url);
   const eFilename = escapeBash(filename);
@@ -28,6 +29,9 @@ function generateCommands(download, extraArgs) {
       curl += ` -H ${escapeBash(`${h.name}: ${h.value}`)}`;
     }
   });
+  if (bodyData) {
+    curl += ` --data ${escapeBash(bodyData)}`;
+  }
   curl += `${formattedExtraArgs} -o ${eFilename} ${eUrl}`;
 
   // 2. Build Wget Command
@@ -42,6 +46,9 @@ function generateCommands(download, extraArgs) {
       wget += ` --header ${escapeBash(`${h.name}: ${h.value}`)}`;
     }
   });
+  if (bodyData) {
+    wget += ` --post-data ${escapeBash(bodyData)}`;
+  }
   wget += `${formattedExtraArgs} --output-document ${eFilename} ${eUrl}`;
 
   // 3. Build Aria2 Command
@@ -56,6 +63,9 @@ function generateCommands(download, extraArgs) {
       aria2 += ` --header ${escapeBash(`${h.name}: ${h.value}`)}`;
     }
   });
+  if (bodyData) {
+    aria2 += ` --post-data ${escapeBash(bodyData)}`;
+  }
   aria2 += `${formattedExtraArgs} --out ${eFilename} ${eUrl}`;
 
   return { curl, wget, aria2 };
@@ -109,24 +119,15 @@ function updateDetails() {
   chrome.storage.local.get({ extraArgs: '' }, (settings) => {
     const cmds = generateCommands(selectedDownload, settings.extraArgs);
 
-    document.getElementById('curlBox').textContent = cmds.curl;
-    document.getElementById('wgetBox').textContent = cmds.wget;
-    document.getElementById('aria2Box').textContent = cmds.aria2;
-  });
-
-  chrome.downloads.search({ id: selectedDownload.id }, (results) => {
-    const actionButtons = document.querySelector('.actions');
-    if (results && results[0] && results[0].state === 'in_progress') {
-      actionButtons.style.display = 'flex';
-    } else {
-      actionButtons.style.display = 'none';
-    }
+    document.getElementById('curlBox').value = cmds.curl;
+    document.getElementById('wgetBox').value = cmds.wget;
+    document.getElementById('aria2Box').value = cmds.aria2;
   });
 }
 
 function setupCopy(buttonId, boxId) {
   document.getElementById(buttonId).addEventListener('click', () => {
-    const text = document.getElementById(boxId).textContent;
+    const text = document.getElementById(boxId).value;
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.getElementById(buttonId);
       const originalText = btn.textContent;
@@ -146,30 +147,14 @@ setupCopy('copyCurl', 'curlBox');
 setupCopy('copyWget', 'wgetBox');
 setupCopy('copyAria2', 'aria2Box');
 
-document.getElementById('resumeBtn').addEventListener('click', () => {
-  if (selectedDownload) {
-    chrome.downloads.resume(selectedDownload.id, () => {
-      updateDetails();
-    });
-  }
-});
-
-document.getElementById('cancelBtn').addEventListener('click', () => {
-  if (selectedDownload) {
-    chrome.downloads.cancel(selectedDownload.id, () => {
-      updateDetails();
-    });
-  }
-});
-
 // Settings handlers
-const autoPauseCheck = document.getElementById('autoPauseCheck');
-chrome.storage.local.get({ autoPause: false }, (settings) => {
-  autoPauseCheck.checked = settings.autoPause;
+const autoCancelCheck = document.getElementById('autoCancelCheck');
+chrome.storage.local.get({ autoCancel: false }, (settings) => {
+  autoCancelCheck.checked = settings.autoCancel;
 });
 
-autoPauseCheck.addEventListener('change', () => {
-  chrome.storage.local.set({ autoPause: autoPauseCheck.checked });
+autoCancelCheck.addEventListener('change', () => {
+  chrome.storage.local.set({ autoCancel: autoCancelCheck.checked });
 });
 
 const extraArgsInput = document.getElementById('extraArgsInput');

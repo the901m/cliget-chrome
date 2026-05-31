@@ -1,0 +1,159 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 12px;
+  min-width: 450px;
+  max-width: 800px;
+  background-color: #f9f9fb;
+  color: #333;
+}
+
+h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.clear-btn {
+  background: none;
+  border: 1px solid #d1d5da;
+  color: #666;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.clear-btn:hover {
+  background-color: #ffeef0;
+  border-color: #fca5a5;
+  color: #f87171;
+}
+
+.option-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  background: #fff;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #e1e4e8;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.extra-args-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.extra-args-container label {
+  font-size: 11px;
+  color: #666;
+  font-weight: bold;
+}
+
+.extra-args-container input[type="text"] {
+  padding: 6px;
+  border: 1px solid #d1d5da;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.download-list-container {
+  max-height: 120px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.download-item {
+  padding: 8px;
+  font-size: 12px;
+  border-bottom: 1px solid #e1e4e8;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.download-item:last-child {
+  border-bottom: none;
+}
+
+.download-item.selected {
+  background-color: #007aff;
+  color: #fff;
+}
+
+.command-container {
+  margin-bottom: 12px;
+}
+
+.command-header {
+  font-size: 11px;
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+textarea.command-box {
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #272822;
+  color: #f8f8f2;
+  font-family: monospace !important;
+  font-size: 11px;
+  padding: 8px;
+  border-radius: 4px;
+  border: none;
+  resize: vertical;
+  min-height: 50px;
+  max-height: 150px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+button.copy-btn {
+  background-color: #e1e4e8;
+  border: none;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+button.copy-btn:hover {
+  background-color: #d1d5da;
+}
+
+.no-downloads {
+  padding: 16px;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+}
